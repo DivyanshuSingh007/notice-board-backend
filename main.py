@@ -48,6 +48,27 @@ def periodic_cleanup():
             # If there's an error, wait 1 hour before trying again
             time.sleep(3600)
 
+@app.get("/")
+async def root():
+    """
+    Health check endpoint for Railway
+    """
+    return {
+        "message": "Notice Board Backend API",
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint for Railway
+    """
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat()
+    }
+
 @app.on_event("startup")
 async def startup_event():
     """
