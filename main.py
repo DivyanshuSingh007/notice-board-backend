@@ -21,14 +21,17 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",  # Development
         "http://localhost:3000",  # Alternative dev port
+        "http://localhost:4173",  # Vite preview
         "http://notice-board-frontend-phi.vercel.app",  # Vercel frontend
         "https://notice-board-frontend-phi.vercel.app",  # Vercel frontend (HTTPS)
         "https://yourdomain.com",  # Replace with your actual domain
         "https://www.yourdomain.com",  # Replace with your actual domain
+        "*",  # Allow all origins for development (remove in production)
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Global variable to control the cleanup thread

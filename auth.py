@@ -28,6 +28,11 @@ class OAuth2EmailRequestForm:
         self.email = email
         self.password = password
 
+# JSON-based login request model
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
 db_dependency = Annotated[Session, Depends(get_db)]
 
 # ----------------------------------------
@@ -122,6 +127,15 @@ def create_user(create_user_request: CreateUserRequest, db: db_dependency):
 @router.post("/login", response_model=TokenResponse)
 def login(form_data: Annotated[OAuth2EmailRequestForm, Depends()], db: db_dependency):
     user = authenticate_user(form_data.email, form_data.password, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_access_token(user.email)
+    return {"access_token": token, "token_type": "bearer"}
+
+@router.post("/login-json", response_model=TokenResponse)
+def login_json(login_request: LoginRequest, db: db_dependency):
+    user = authenticate_user(login_request.email, login_request.password, db)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
