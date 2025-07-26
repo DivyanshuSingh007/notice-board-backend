@@ -133,15 +133,6 @@ def login(form_data: Annotated[OAuth2EmailRequestForm, Depends()], db: db_depend
     token = create_access_token(user.email)
     return {"access_token": token, "token_type": "bearer"}
 
-@router.post("/login-json", response_model=TokenResponse)
-def login_json(login_request: LoginRequest, db: db_dependency):
-    user = authenticate_user(login_request.email, login_request.password, db)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    token = create_access_token(user.email)
-    return {"access_token": token, "token_type": "bearer"}
-
 @router.post("/logout")
 def logout():
     # For stateless JWT, logout is handled on the client by removing the token
