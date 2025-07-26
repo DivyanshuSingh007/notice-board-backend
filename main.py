@@ -55,20 +55,11 @@ app = FastAPI(lifespan=lifespan)
 # Add CORS middleware for frontend development and production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Development
-        "http://localhost:3000",  # Alternative dev port
-        "http://localhost:4173",  # Vite preview
-        "http://notice-board-frontend-phi.vercel.app",  # Vercel frontend
-        "https://notice-board-frontend-phi.vercel.app",  # Vercel frontend (HTTPS)
-        "https://yourdomain.com",  # Replace with your actual domain
-        "https://www.yourdomain.com",  # Replace with your actual domain
-        "*",  # Allow all origins for development (remove in production)
-    ],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    allow_origins=["*"],  # Allow all origins for now
+    allow_credentials=False,  # Set to False when using wildcard origins
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+    expose_headers=["*"],  # Expose all headers
 )
 
 @app.get("/")
@@ -91,6 +82,13 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.now().isoformat()
     }
+
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    """
+    Handle OPTIONS requests for CORS preflight
+    """
+    return {"message": "OK"}
 
 # Register routers
 app.include_router(auth_router)
