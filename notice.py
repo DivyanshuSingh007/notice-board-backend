@@ -9,7 +9,7 @@ from auth import get_current_user  # Depends on how you structured auth
 from dependencies import get_db
 from enum import Enum
 import logging
-from notifications import notification_service
+# Notification service removed - notifications.py deleted
 
 router = APIRouter(prefix="/notice", tags=["Notice"])
 
@@ -106,20 +106,8 @@ def create_notice(
     db.commit()
     db.refresh(notice)
     
-    # Prepare notice data for notifications
-    notification_data = {
-        "title": notice.title,
-        "description": notice.description,
-        "type": notice.type,
-        "post_date": notice.post_date.isoformat(),
-        "event_date": notice.event_date.isoformat() if notice.event_date else None,
-        "event_start_time": notice.event_start_time.isoformat() if notice.event_start_time else None,
-        "event_end_time": notice.event_end_time.isoformat() if notice.event_end_time else None,
-    }
-    
-    # Add background tasks
+    # Add background task to check for expired notices
     background_tasks.add_task(delete_expired_notices)
-    background_tasks.add_task(notification_service.notify_all_users, db, notification_data)
     
     logger.info(f"Notice created by {current_user.email}.")
     
@@ -214,31 +202,4 @@ def cleanup_expired_notices(
     
     return {"message": "Cleanup task scheduled"}
 
-@router.post("/test-notifications")
-async def test_notifications(
-    background_tasks: BackgroundTasks,
-    current_user: current_user_dependency,
-    db: db_dependency
-):
-    """Test endpoint to send notifications to all users"""
-    if not current_user.admin:
-        raise HTTPException(status_code=403, detail="Only admins can test notifications")
-    
-    # Test notice data
-    test_notice_data = {
-        "title": "Test Notice - Notification System",
-        "description": "This is a test notice to verify that the email and SMS notification system is working correctly.",
-        "type": "announcement",
-        "post_date": date.today().isoformat(),
-        "event_date": None,
-        "event_start_time": None,
-        "event_end_time": None,
-    }
-    
-    # Send notifications in background
-    background_tasks.add_task(notification_service.notify_all_users, db, test_notice_data)
-    
-    return {
-        "message": "Test notifications sent to all registered users",
-        "notice_data": test_notice_data
-    }
+# Test notifications endpoint removed - notifications.py deleted
