@@ -9,30 +9,10 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 from db import BASE, engine
+from contextlib import asynccontextmanager
 
 # Load environment variables from .env file
 load_dotenv()
-
-app = FastAPI()
-
-# Add CORS middleware for frontend development and production
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Development
-        "http://localhost:3000",  # Alternative dev port
-        "http://localhost:4173",  # Vite preview
-        "http://notice-board-frontend-phi.vercel.app",  # Vercel frontend
-        "https://notice-board-frontend-phi.vercel.app",  # Vercel frontend (HTTPS)
-        "https://yourdomain.com",  # Replace with your actual domain
-        "https://www.yourdomain.com",  # Replace with your actual domain
-        "*",  # Allow all origins for development (remove in production)
-    ],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-)
 
 # Global variable to control the cleanup thread
 cleanup_thread = None
@@ -53,6 +33,43 @@ def periodic_cleanup():
             print(f"Error in periodic cleanup: {e}")
             # If there's an error, wait 1 hour before trying again
             time.sleep(3600)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global cleanup_thread, stop_cleanup
+    stop_cleanup = False
+    # Startup logic
+    cleanup_thread = threading.Thread(target=periodic_cleanup, daemon=True)
+    cleanup_thread.start()
+    print("Automatic notice cleanup started - will run every 24 hours")
+    BASE.metadata.create_all(bind=engine)
+    print("Database tables checked/created")
+    yield
+    # Shutdown logic
+    stop_cleanup = True
+    if cleanup_thread:
+        cleanup_thread.join(timeout=5)
+
+app = FastAPI(lifespan=lifespan)
+
+# Add CORS middleware for frontend development and production
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # Development
+        "http://localhost:3000",  # Alternative dev port
+        "http://localhost:4173",  # Vite preview
+        "http://notice-board-frontend-phi.vercel.app",  # Vercel frontend
+        "https://notice-board-frontend-phi.vercel.app",  # Vercel frontend (HTTPS)
+        "https://yourdomain.com",  # Replace with your actual domain
+        "https://www.yourdomain.com",  # Replace with your actual domain
+        "*",  # Allow all origins for development (remove in production)
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 
 @app.get("/")
 async def root():
@@ -75,33 +92,6 @@ async def health_check():
         "timestamp": datetime.now().isoformat()
     }
 
-@app.on_event("startup")
-async def startup_event():
-    """
-    Start the periodic cleanup thread when the application starts
-    """
-    global cleanup_thread, stop_cleanup
-    stop_cleanup = False
-    
-    # Start the cleanup thread
-    cleanup_thread = threading.Thread(target=periodic_cleanup, daemon=True)
-    cleanup_thread.start()
-    print("Automatic notice cleanup started - will run every 24 hours")
-
-    # Create all tables if they don't exist
-    BASE.metadata.create_all(bind=engine)
-    print("Database tables checked/created")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """
-    Stop the periodic cleanup thread when the application shuts down
-    """
-    global stop_cleanup
-    stop_cleanup = True
-    if cleanup_thread:
-        cleanup_thread.join(timeout=5)
-    print("Automatic notice cleanup stopped")
-
+# Register routers
 app.include_router(auth_router)
 app.include_router(notice_router)
