@@ -20,6 +20,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",  # Development
         "http://localhost:3000",  # Alternative dev port
+        "http://notice-board-frontend-phi.vercel.app",  # Vercel frontend
+        "https://notice-board-frontend-phi.vercel.app",  # Vercel frontend (HTTPS)
         "https://yourdomain.com",  # Replace with your actual domain
         "https://www.yourdomain.com",  # Replace with your actual domain
     ],
