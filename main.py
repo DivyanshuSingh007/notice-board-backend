@@ -8,6 +8,7 @@ import time
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
+from db import BASE, engine
 
 # Load environment variables from .env file
 load_dotenv()
@@ -83,6 +84,10 @@ async def startup_event():
     cleanup_thread = threading.Thread(target=periodic_cleanup, daemon=True)
     cleanup_thread.start()
     print("Automatic notice cleanup started - will run every 24 hours")
+
+    # Create all tables if they don't exist
+    BASE.metadata.create_all(bind=engine)
+    print("Database tables checked/created")
 
 @app.on_event("shutdown")
 async def shutdown_event():
