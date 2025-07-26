@@ -55,11 +55,17 @@ app = FastAPI(lifespan=lifespan)
 # Add CORS middleware for frontend development and production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for now
-    allow_credentials=False,  # Set to False when using wildcard origins
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
-    expose_headers=["*"],  # Expose all headers
+    allow_origins=[
+        "https://notice-board-frontend-phi.vercel.app",
+        "http://notice-board-frontend-phi.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:4173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 @app.get("/")
