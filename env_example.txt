@@ -1,0 +1,23 @@
+# Database Configuration
+DATABASE_URL=sqlite:///./notice.db
+
+# JWT Configuration
+SECRET_KEY=your-super-secret-key-change-this-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Server Configuration
+HOST=0.0.0.0
+PORT=8000
+
+# CORS Configuration
+ALLOWED_ORIGINS=http://localhost:5173,https://yourdomain.com
+
+# Email Configuration (Resend) - FREE - 3,000 emails/month
+RESEND_API_KEY=re_your-resend-api-key-here
+MAIL_FROM=your-verified-email@yourdomain.com
+
+# SMS Configuration (Twilio) - Optional - leave empty for email-only
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER= 
