@@ -152,3 +152,22 @@ def admin_only(current_user: Annotated[Users, Depends(get_current_user)]):
     if not current_user.admin:
         raise HTTPException(status_code=403, detail="Admins only")
     return {"message": f"Welcome Admin {current_user.first_name}!"}
+
+@router.post("/make-admin")
+def make_user_admin(email: str, db: db_dependency):
+    """
+    Make a user admin by their email
+    This is a temporary endpoint for development - remove in production!
+    """
+    user = db.query(Users).filter(Users.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.admin = True
+    db.commit()
+    
+    return {
+        "message": f"User {email} is now an admin",
+        "user_id": user.id,
+        "admin": user.admin
+    }
