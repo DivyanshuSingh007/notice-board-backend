@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, Field, EmailStr
@@ -50,6 +50,17 @@ class CreateUserRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    first_name: str
+    last_name: str
+    mobile_no: str
+    admin: bool
+    
+    class Config:
+        from_attributes = True
 
 # ----------------------------------------
 # Utilities
@@ -171,3 +182,14 @@ def make_user_admin(email: str, db: db_dependency):
         "user_id": user.id,
         "admin": user.admin
     }
+
+@router.get("/users", response_model=List[UserResponse])
+def get_all_users(current_user: Annotated[Users, Depends(get_current_user)], db: db_dependency):
+    """
+    Get all users - Admin only endpoint
+    """
+    if not current_user.admin:
+        raise HTTPException(status_code=403, detail="Only admins can view all users")
+    
+    users = db.query(Users).all()
+    return users
