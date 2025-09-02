@@ -53,15 +53,22 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # Add CORS middleware for frontend development and production
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+frontend_origins_env = os.getenv("FRONTEND_ORIGINS", "").strip()
+if frontend_origins_env:
+    allow_origins = [o.strip() for o in frontend_origins_env.split(",") if o.strip()]
+else:
+    # Sensible defaults; override via FRONTEND_ORIGINS
+    allow_origins = [
         "https://notice-board-frontend-phi.vercel.app",
         "http://notice-board-frontend-phi.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000",
         "http://localhost:4173",
-    ],
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

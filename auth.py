@@ -11,13 +11,16 @@ logging.basicConfig(level=logging.INFO)
 
 from models import Users
 from dependencies import get_db  
+import os
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 # Security configs
-SECRET_KEY = "your_secret_key_here"  # Replace with a secure random value
+# Read from environment for production; ensure to set SECRET_KEY on Render
+SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-prod")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ALLOW_MAKE_ADMIN = os.getenv("ALLOW_MAKE_ADMIN", "false").lower() in ("1", "true", "yes")
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -145,7 +148,7 @@ def login(form_data: Annotated[OAuth2EmailRequestForm, Depends()], db: db_depend
     return {"access_token": token, "token_type": "bearer"}
 
 @router.post("/logout")
-def logout():
+def logout(): 
     # For stateless JWT, logout is handled on the client by removing the token
     return {"message": "Logged out successfully. Please remove the token from your client."}
 
@@ -167,9 +170,12 @@ def admin_only(current_user: Annotated[Users, Depends(get_current_user)]):
 @router.post("/make-admin")
 def make_user_admin(email: str, db: db_dependency):
     """
-    Make a user admin by their email
-    This is a temporary endpoint for development - remove in production!
+    Elevate a user to admin by their email.
+    Guarded by ALLOW_MAKE_ADMIN env flag. Keep disabled in production.
     """
+    if not ALLOW_MAKE_ADMIN:
+        raise HTTPException(status_code=403, detail="This endpoint is disabled in this environment")
+
     user = db.query(Users).filter(Users.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
