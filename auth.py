@@ -140,6 +140,7 @@ def create_user(create_user_request: CreateUserRequest, db: db_dependency):
 
 @router.post("/login", response_model=TokenResponse)
 def login(form_data: Annotated[OAuth2EmailRequestForm, Depends()], db: db_dependency):
+    # Updated: Trigger Render redeployment for user deletion sync
     user = authenticate_user(form_data.email, form_data.password, db)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
