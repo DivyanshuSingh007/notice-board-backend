@@ -60,6 +60,7 @@ else:
     # Sensible defaults; override via FRONTEND_ORIGINS
     allow_origins = [
         "https://notice-board-frontend-p4doxnki0-divyanshusingh007s-projects.vercel.app",
+        "https://notice-board-frontend-git-master-divyanshusingh007s-projects.vercel.app",
         "https://notice-board-frontend-phi.vercel.app",
         "http://notice-board-frontend-phi.vercel.app",
         "http://localhost:5173",
