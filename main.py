@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from auth import router as auth_router
 from notice import router as notice_router, delete_expired_notices
@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import os
 from db import BASE, engine
 from contextlib import asynccontextmanager
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
@@ -52,8 +53,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# Basic logging setup
+logging.basicConfig(level=logging.INFO)
+
 # Add CORS middleware for frontend development and production
 frontend_origins_env = os.getenv("FRONTEND_ORIGINS", "").strip()
+frontend_origin_regex_env = os.getenv("FRONTEND_ORIGIN_REGEX", "").strip()
+
 if frontend_origins_env:
     allow_origins = [o.strip() for o in frontend_origins_env.split(",") if o.strip()]
 else:
@@ -68,9 +74,13 @@ else:
         "http://localhost:4173",
     ]
 
+# Allow regex for dynamic preview deployments (e.g., Vercel)
+allow_origin_regex = frontend_origin_regex_env or r"https://.*\.vercel\.app$"
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -99,10 +109,13 @@ async def health_check():
     }
 
 @app.options("/{full_path:path}")
-async def options_handler(full_path: str):
+async def options_handler(full_path: str, request: Request):
     """
     Handle OPTIONS requests for CORS preflight
     """
+    origin = request.headers.get("origin", "<no-origin>")
+    req_method = request.headers.get("access-control-request-method", "<no-acr-method>")
+    logging.info(f"OPTIONS preflight for path=/{full_path} origin={origin} method={req_method}")
     return {"message": "OK"}
 
 # Register routers
