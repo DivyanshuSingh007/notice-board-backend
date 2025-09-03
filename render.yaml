@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: notice-board-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app -c gunicorn.conf.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
+      - key: FRONTEND_ORIGINS
+        value: https://notice-board-frontend-phi.vercel.app
+      - key: FRONTEND_ORIGIN_REGEX
+        value: https://.*\.vercel\.app$
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOW_MAKE_ADMIN
+        value: false
